@@ -1536,6 +1536,11 @@
     return (doc.type === 'entity' ? 'Who is ' : 'What is ') + doc.title + '?';
   }
 
+  function smartTagLabel(sourceDoc, candidateDoc) {
+    var shared = candidateDoc.tags.find(function (t) { return sourceDoc.tags.indexOf(t) !== -1; });
+    return '#' + (shared || candidateDoc.tags[0]);
+  }
+
   function renderAsk(query, results) {
     closeAskPane();
     el('rw-ask-question').textContent = query;
@@ -1567,9 +1572,11 @@
       '<svg class="rw-sources-chip-chevron" width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 5l5 5-5 5"/></svg>';
     sourcesChip.onclick = function () { openAskPreview(top.id); };
 
-    var preview = previewParagraphs(top.body, 2);
+    var preview = previewParagraphs(top.body, 3);
     if (!preview.length) preview = [snippet(top, 240)];
-    body.innerHTML = preview.map(function (p) { return '<p>' + renderInline(p) + '</p>'; }).join('');
+    body.innerHTML = preview.map(function (p, i) {
+      return '<div class="rw-a-bubble" style="animation-delay:' + (i * 140) + 'ms"><p>' + renderInline(p) + '</p></div>';
+    }).join('');
     body.querySelectorAll('.wikilink').forEach(function (btn) {
       btn.addEventListener('click', function () { openAskPreview(btn.dataset.id); });
     });
@@ -1579,7 +1586,7 @@
 
     var topics = findRelated(top).slice(0, 3);
     topicsRow.innerHTML = topics.map(function (d) {
-      return '<button type="button" class="rw-suggestion-chip" data-topic="' + d.id + '">' + escapeHtml(topicQuestion(d)) + '</button>';
+      return '<button type="button" class="rw-smart-tag" data-topic="' + d.id + '" title="' + escapeHtml(topicQuestion(d)) + '">' + escapeHtml(smartTagLabel(top, d)) + '</button>';
     }).join('');
     topicsRow.querySelectorAll('[data-topic]').forEach(function (btn) {
       btn.addEventListener('click', function () {
